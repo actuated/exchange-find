@@ -1,7 +1,11 @@
 #!/bin/bash
 #sleepscan.sh
+#Script uses curl to check HTTPS response headers for provided hostname or IP targets.
 dateCreated="3/2/2020"
 dateLastMod="3/2/2020"
+# 3/2/2020 - Added check if 302 Location header url starts with htt*: or not.
+#          - Set to ignore 400, 403, and 500 responses in addition to 404.
+#          - Added check to note if 401 but no Basic or NTLM auth.
 
 exchUrls="/autodiscover/autodiscover.xml /ecp /ews /mapi /Microsoft-Server-ActiveSync /OAB /owa /rpc"
 
@@ -39,11 +43,16 @@ while read -r thisTargetInput; do
     thisResp=$(curl -Iks $thisUrl --max-time 60)
     if [ "$thisResp" != "" ]; then
       thisRespCode=$(echo "$thisResp" | grep -i "^HTTP" | awk '{print $2}')
-      if [ "$thisRespCode" != "" ] && [ "$thisRespCode" != "404" ]; then
+      if [ "$thisRespCode" != "" ] && [ "$thisRespCode" != "400" ] && [ "$thisRespCode" != "403" ]  && [ "$thisRespCode" != "404" ] && [ "$thisRespCode" != "500" ]; then
         thisOut="$thisUrl - $thisRespCode"
         is302=$(echo "$thisResp" | grep -i "Location:" | awk '{print $2}')
         if [ "$is302" != "" ]; then
-          thisOut="$thisOut - https://$thisTarget$is302"
+          check302Url=$(echo "$is302" | grep -i "^htt.*:")
+          if [ "$check302Url" != "" ]; then
+            thisOut="$thisOut - $is302"
+          else
+            thisOut="$thisOut - https://$thisTarget$is302"
+          fi
         fi
         isBasic=$(echo "$thisResp" | grep -i "WWW-Authenticate: Basic")
         if [ "$isBasic" != "" ]; then
@@ -52,6 +61,9 @@ while read -r thisTargetInput; do
         isNtlm=$(echo "$thisResp" | grep -i "WWW-Authenticate: N")
         if [ "$isNtlm" != "" ]; then
           thisOut="$thisOut - NTLM"
+        fi
+        if [ "$thisRespCode" = "401" ] && [ "$isBasic" = "" ] && [ "$isNtlm" = "" ]; then
+          thisOut="$thisOut - No Basic or NTLM?"
         fi
         if [ "$firstResult" = "Y" ]; then
           echo
