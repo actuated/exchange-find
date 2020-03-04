@@ -3,7 +3,7 @@ Shell script to check a list of hostnames or IPs for HTTPS response codes, WWW-A
 
 # Usage
 ```
-./exchange-find.sh [list of target hosts]
+./exchange-find.sh [list of target hosts] [--show-ntlm]
 ```
 - Strips `https://` and trailing `/`s from target hostnames or IPs.
   - Target list should be a file containing hostnames, IPs, or IP:Port.
@@ -23,9 +23,11 @@ y.y.y.y:z
   - For 451, adds the URL from the X-MS-Location response header.
   - Flags "Basic" for responses with `WWW-Authenticate: Basic`.
   - Flags "NTLM" for responses with headers that match `WWW-Authenticate: NTLM`.
-  - After finding NTLM auth, will show Base64-decoded response for empty authentication so you can try to figure out the domain.
   - Flags if 401, but no Basic or NTLM authentication headers.
   - Checks for headers are case-insensitive.
+- Script will attempt to get the domain name if any NTLM endpoints were found.
+  - The script will use the last NTLM endpoint found for that target.
+  - `--show-ntlm` will optionally show the response value obtained.
   
 # Example
 ```
@@ -43,6 +45,8 @@ https://a.a.a.a/Microsoft-Server-ActiveSync - 401 - Basic
 https://a.a.a.a/OAB - 401 - NTLM
 https://a.a.a.a/owa - 401 - NTLM
 https://a.a.a.a/rpc - 401 - Basic - NTLM
+
+Domain is probably: ACME
 
 =========================================================================================
 

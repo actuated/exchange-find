@@ -20,11 +20,15 @@ if [ "$inFile" = "" ] || [ ! -f "$inFile" ]; then
   echo
   echo "Error: Input file '$inFile' does not exist or was not specified."
   echo
-  echo "Usage: ./exchange-find.sh [list of target hosts]"
+  echo "Usage: ./exchange-find.sh [list of target hosts] [--show-ntlm]"
   echo
   echo "Script uses curl to check HTTPS response headers for provided hostname or IP targets."
   echo "Checks for Exchange URLs and WWW-Authenticate headers. Checks for:"
   echo "$exchUrls"
+  echo
+  echo "--show-ntlm   If NTLM authentication endpoints are found, script attempts to get the"
+  echo "              domain name by curling an empty NTLM login to the last NTLM endpoint for"
+  echo "              that target. This option adds the parsed ASCII output of that response."
   echo
   echo "Created $dateCreated, last modified $dateLastMod."
   echo
@@ -32,6 +36,9 @@ if [ "$inFile" = "" ] || [ ! -f "$inFile" ]; then
   echo
   exit
 fi
+
+showNTLM="N"
+if [ "$2" == "--show-ntlm" ]; then showNTLM="Y"; fi
 
 numTargets=$(wc -l "$inFile" | awk '{print $1}')
 echo
@@ -99,14 +106,17 @@ while read -r thisTargetInput; do
       fi
     fi
   done
+  # If an NTLM URL was found for this target, get blank auth response, decode and parse for domain name
   if [ "$lastNTLMUrl" != "" ]; then
     echo
     thisRand="parse-ntlmssp-$(cat /dev/urandom | tr -dc 'A-Za-z' | head -c 10 | cut -c1-10).txt"
     if [ -f "$thisRand" ]; then rm "$thisRand"; fi
-    echo "NTLMSSP Response for Blank Auth to $thisUrl:"
     curl -Iks --ntlm -u : $thisUrl | grep -i "WWW-Authenticate: NTLM ..." | awk '{print $3}' > "$thisRand"
-    base64 -d --ignore-garbage "$thisRand" | xxd -c 80 | awk '{print $NF}'
-    echo
+    if [ "$showNTLM" = "Y" ]; then
+      echo "NTLMSSP Response for Blank Auth to $thisUrl:"
+      base64 -d --ignore-garbage "$thisRand" | xxd -c 80 | awk '{print $NF}'
+      echo
+    fi
     thisDomain=$(base64 -d --ignore-garbage "$thisRand" | xxd | awk '{print $NF}' | tr -d '\n' | cut -c57-100 | awk -F \. '{print $1}')
     echo "Domain is probably: $thisDomain"
     if [ -f "$thisRand" ]; then rm "$thisRand"; fi
