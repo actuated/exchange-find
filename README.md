@@ -6,14 +6,23 @@ Shell script to check a list of hostnames or IPs for HTTPS response codes, WWW-A
 ./exchange-find.sh [list of target hosts]
 ```
 - Strips `https://` and trailing `/`s from target hostnames or IPs.
+  - Target list should be a file containing hostnames, IPs, or IP:Port.
+  - Example:
+```
+example.com
+mail.example.com
+x.x.x.x
+y.y.y.y:z
+```
 - Uses `curl -Iks https://[target][url]` to get HTTPS response headers for Exchange URLs:
   - `/autodiscover/autodiscover.xml /ecp /ews /mapi /Microsoft-Server-ActiveSync /OAB /owa /rpc`
   - Timeout set to 60 seconds.
 - Ignores non-responses, 400, 403, 404, and 500 responses.
 - Provides responses codes for responsive URLs.
   - For 302, adds the URL from the Location response header.
+  - For 451, adds the URL from the X-MS-Location response header.
   - Flags "Basic" for responses with `WWW-Authenticate: Basic`.
-  - Flags "NTLM" for responses with headers that match `WWW-Authenticate: N`.
+  - Flags "NTLM" for responses with headers that match `WWW-Authenticate: NTLM`.
   - Flags if 401, but no Basic or NTLM authentication headers.
   - Checks for headers are case-insensitive.
   
