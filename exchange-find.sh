@@ -8,8 +8,9 @@ dateLastMod="3/2/2020"
 #          - Added check to note if 401 but no Basic or NTLM auth.
 # 3/2/2020 - Limited NTLM flag to WWW-Authenticate: NTLM header so it doesn't flag on Negotiate.
 #          - Added 451 redirect check.
+#          - Changed /owa to /owa/, added NTLM response check, added 301 redirect check.
 
-exchUrls="/autodiscover/autodiscover.xml /ecp /ews /mapi /Microsoft-Server-ActiveSync /OAB /owa /rpc"
+exchUrls="/autodiscover/autodiscover.xml /ecp /ews /mapi /Microsoft-Server-ActiveSync /OAB /owa/ /rpc"
 
 echo
 echo "=====================[ exchange-find.sh - Ted R (github: actuated) ]====================="
@@ -40,6 +41,7 @@ while read -r thisTargetInput; do
   # Check target input for https:// or trailing /
   thisTarget=$(echo "$thisTargetInput" | tr 'A-Z' 'a-z' | sed 's/https:\/\///g' | sed 's/\/$//g')
   firstResult="Y"
+  lastNTLMUrl=""
   for exchUrl in $exchUrls; do
     thisOut=""
     thisUrl="https://$thisTarget$exchUrl"
@@ -48,8 +50,8 @@ while read -r thisTargetInput; do
       thisRespCode=$(echo "$thisResp" | grep -i "^HTTP" | head -n 1 | awk '{print $2}')
       if [ "$thisRespCode" != "" ] && [ "$thisRespCode" != "400" ] && [ "$thisRespCode" != "403" ]  && [ "$thisRespCode" != "404" ] && [ "$thisRespCode" != "500" ]; then
         thisOut="$thisUrl - $thisRespCode"
-        # For 302, check if there is a Location header, and if it is a full URL or needs the host added.
-        if [ "$thisRespCode" = "302" ]; then
+        # For 302/301, check if there is a Location header, and if it is a full URL or needs the host added.
+        if [ "$thisRespCode" = "302" ] || [ "$thisRespCode" = "301"; then
           hasLoc=$(echo "$thisResp" | grep -i "Location:" | awk '{print $2}')
           if [ "$hasLoc" != "" ]; then
             check302Url=$(echo "$hasLoc" | grep -i "^htt.*:")
@@ -81,6 +83,7 @@ while read -r thisTargetInput; do
         isNtlm=$(echo "$thisResp" | grep -i "WWW-Authenticate: NTLM")
         if [ "$isNtlm" != "" ]; then
           thisOut="$thisOut - NTLM"
+          lastNTLMUrl="$thisUrl"
         fi
         # Flag if 401 response did not support Basic or NTLM auth
         if [ "$thisRespCode" = "401" ] && [ "$isBasic" = "" ] && [ "$isNtlm" = "" ]; then
@@ -96,6 +99,12 @@ while read -r thisTargetInput; do
       fi
     fi
   done
+  if [ "$lastNTLMUrl" != "" ]; then
+    thisNTLMResp=$(curl -Iks --ntlm -u : $thisUrl | grep -i "WWW-Authenticate: NTLM ..." | awk '{print $3}' | base64 -d --ignore-garbage; echo | strings)
+    echo
+    echo "Decoded NTLMSSP Response for Blank Auth to $thisUrl:"
+    echo "$thisNTLMResp"
+  fi
 done < "$inFile"
 
 echo
