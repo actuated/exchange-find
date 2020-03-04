@@ -56,7 +56,7 @@ while read -r thisTargetInput; do
             if [ "$check302Url" != "" ]; then
               thisOut="$thisOut - $hasLoc"
             else
-              thisOut="$thisOut - https://$hasLoc"
+              thisOut="$thisOut - https://$thisTarget$hasLoc"
             fi
           fi
         fi
@@ -68,7 +68,7 @@ while read -r thisTargetInput; do
             if [ "$check451Url" != "" ]; then
               thisOut="$thisOut - $hasLoc"
             else
-              thisOut="$thisOut - https://$hasLoc"
+              thisOut="$thisOut - https://$thisTarget$hasLoc"
             fi
           fi
         fi
