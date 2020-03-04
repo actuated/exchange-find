@@ -51,7 +51,7 @@ while read -r thisTargetInput; do
       if [ "$thisRespCode" != "" ] && [ "$thisRespCode" != "400" ] && [ "$thisRespCode" != "403" ]  && [ "$thisRespCode" != "404" ] && [ "$thisRespCode" != "500" ]; then
         thisOut="$thisUrl - $thisRespCode"
         # For 302/301, check if there is a Location header, and if it is a full URL or needs the host added.
-        if [ "$thisRespCode" = "302" ] || [ "$thisRespCode" = "301"; then
+        if [ "$thisRespCode" = "302" ] || [ "$thisRespCode" = "301" ]; then
           hasLoc=$(echo "$thisResp" | grep -i "Location:" | awk '{print $2}')
           if [ "$hasLoc" != "" ]; then
             check302Url=$(echo "$hasLoc" | grep -i "^htt.*:")
@@ -100,7 +100,7 @@ while read -r thisTargetInput; do
     fi
   done
   if [ "$lastNTLMUrl" != "" ]; then
-    thisNTLMResp=$(curl -Iks --ntlm -u : $thisUrl | grep -i "WWW-Authenticate: NTLM ..." | awk '{print $3}' | base64 -d --ignore-garbage; echo | strings)
+    thisNTLMResp=$(curl -Iks --ntlm -u : $thisUrl | grep -i "WWW-Authenticate: NTLM ..." | awk '{print $3}' | base64 -d --ignore-garbage; echo | tr -d '\0')
     echo
     echo "Decoded NTLMSSP Response for Blank Auth to $thisUrl:"
     echo "$thisNTLMResp"
