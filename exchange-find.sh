@@ -100,9 +100,9 @@ while read -r thisTargetInput; do
     fi
   done
   if [ "$lastNTLMUrl" != "" ]; then
-    thisNTLMResp=$(curl -Iks --ntlm -u : $thisUrl | grep -i "WWW-Authenticate: NTLM ..." | awk '{print $3}' | base64 -d --ignore-garbage; echo | tr -d '\0')
     echo
-    echo "Decoded NTLMSSP Response for Blank Auth to $thisUrl:"
+    thisNTLMResp=$(curl -Iks --ntlm -u : $thisUrl | grep -i "WWW-Authenticate: NTLM ..." | awk '{print $3}')
+    echo "Base64-Encoded NTLMSSP Response for Blank Auth to $thisUrl:"
     echo "$thisNTLMResp"
   fi
 done < "$inFile"
