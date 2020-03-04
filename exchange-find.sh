@@ -103,10 +103,12 @@ while read -r thisTargetInput; do
     echo
     thisRand="parse-ntlmssp-$(cat /dev/urandom | tr -dc 'A-Za-z' | head -c 10 | cut -c1-10).txt"
     if [ -f "$thisRand" ]; then rm "$thisRand"; fi
-    echo "Decoded NTLMSSP Response for Blank Auth to $thisUrl:"
+    echo "NTLMSSP Response for Blank Auth to $thisUrl:"
     curl -Iks --ntlm -u : $thisUrl | grep -i "WWW-Authenticate: NTLM ..." | awk '{print $3}' > "$thisRand"
-    base64 -d "$thisRand" --ignore-garbage
+    base64 -d --ignore-garbage "$thisRand" | xxd -c 80 | awk '{print $NF}'
     echo
+    thisDomain=$(base64 -d --ignore-garbage "$thisRand" | xxd | awk '{print $NF}' | tr -d '\n' | cut -c57-100 | awk -F \. '{print $1}')
+    echo "Domain is probably: $thisDomain"
     if [ -f "$thisRand" ]; then rm "$thisRand"; fi
   fi
 done < "$inFile"
