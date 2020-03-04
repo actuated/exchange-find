@@ -101,9 +101,13 @@ while read -r thisTargetInput; do
   done
   if [ "$lastNTLMUrl" != "" ]; then
     echo
-    thisNTLMResp=$(curl -Iks --ntlm -u : $thisUrl | grep -i "WWW-Authenticate: NTLM ..." | awk '{print $3}')
-    echo "Base64-Encoded NTLMSSP Response for Blank Auth to $thisUrl:"
-    echo "$thisNTLMResp"
+    thisRand="parse-ntlmssp-$(cat /dev/urandom | tr -dc 'A-Za-z' | head -c 10 | cut -c1-10).txt"
+    if [ -f "$thisRand" ]; then rm "$thisRand"; fi
+    echo "Decoded NTLMSSP Response for Blank Auth to $thisUrl:"
+    curl -Iks --ntlm -u : $thisUrl | grep -i "WWW-Authenticate: NTLM ..." | awk '{print $3}' > "$thisRand"
+    base64 -d "$thisRand" --ignore-garbage
+    echo
+    if [ -f "$thisRand" ]; then rm "$thisRand"; fi
   fi
 done < "$inFile"
 
