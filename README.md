@@ -15,7 +15,7 @@ x.x.x.x
 y.y.y.y:z
 ```
 - Uses `curl -Iks https://[target][url]` to get HTTPS response headers for Exchange URLs:
-  - `/autodiscover/autodiscover.xml /ecp /ews /mapi /Microsoft-Server-ActiveSync /OAB /owa/ /rpc`
+  - `/autodiscover/autodiscover.xml /ecp/ /ews /mapi /Microsoft-Server-ActiveSync /OAB /owa/ /rpc`
   - Timeout set to 60 seconds.
 - Ignores non-responses, 400, 403, 404, and 500 responses.
 - Provides responses codes for responsive URLs.

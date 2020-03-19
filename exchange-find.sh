@@ -3,14 +3,15 @@
 #Script uses curl to check HTTPS response headers for provided hostname or IP targets.
 dateCreated="3/2/2020"
 dateLastMod="3/2/2020"
-# 3/2/2020 - Added check if 302 Location header url starts with htt*: or not.
-#          - Set to ignore 400, 403, and 500 responses in addition to 404.
-#          - Added check to note if 401 but no Basic or NTLM auth.
-# 3/2/2020 - Limited NTLM flag to WWW-Authenticate: NTLM header so it doesn't flag on Negotiate.
-#          - Added 451 redirect check.
-#          - Changed /owa to /owa/, added NTLM response check, added 301 redirect check.
+#   3/2/2020 - Added check if 302 Location header url starts with htt*: or not.
+#            - Set to ignore 400, 403, and 500 responses in addition to 404.
+#            - Added check to note if 401 but no Basic or NTLM auth.
+#   3/2/2020 - Limited NTLM flag to WWW-Authenticate: NTLM header so it doesn't flag on Negotiate.
+#            - Added 451 redirect check.
+#            - Changed /owa to /owa/, added NTLM response check, added 301 redirect check.
+#  3/19/2020 - Changed /ecp to /ecp/, targets to target(s).
 
-exchUrls="/autodiscover/autodiscover.xml /ecp /ews /mapi /Microsoft-Server-ActiveSync /OAB /owa/ /rpc"
+exchUrls="/autodiscover/autodiscover.xml /ecp/ /ews /mapi /Microsoft-Server-ActiveSync /OAB /owa/ /rpc"
 
 echo
 echo "=====================[ exchange-find.sh - Ted R (github: actuated) ]====================="
@@ -42,7 +43,7 @@ if [ "$2" == "--show-ntlm" ]; then showNTLM="Y"; fi
 
 numTargets=$(wc -l "$inFile" | awk '{print $1}')
 echo
-read -p "Press Enter to start checking $numTargets targets in $inFile..."
+read -p "Press Enter to start checking $numTargets target(s) in $inFile..."
 
 while read -r thisTargetInput; do
   # Check target input for https:// or trailing /
